@@ -44,7 +44,34 @@ This can be very useful in situations where you need to share sensitive informat
 - To make the challenge non-interactive there's a "hard coded" common reference string (CRS) or SRS (Structured Reference String) which is a part of trusted setup.
 - The SRS is encrypted  in order for it to be reused, which requires multiplication of encrypted values with elliptic curves, which leads to the requirement of something called elliptic curve pairings
 
-.
+## What is Groth16?
+
+Groth16 is a zero-knowledge proof system that provides a way to prove the knowledge of a witness for a given statement, without revealing any information about the witness itself. It was proposed by Jens Groth in 2016, and it is based on the pairing-based cryptography.
+
+Groth16 consists of three main components: the setup, the proof, and the verification.
+
+    Setup: In the setup phase, a trusted authority generates public parameters that are used by both the prover and the verifier. These parameters include elliptic curve groups, a bilinear pairing function, and some random parameters.
+
+    Proof: In the proof phase, the prover constructs a proof that demonstrates the knowledge of a witness for a given statement. The statement is usually represented as a Boolean circuit or an arithmetic circuit. The witness is a set of private inputs that satisfy the statement. The prover uses the public parameters to construct a commitment to the witness, and then performs a sequence of operations to generate a proof that can be verified by the verifier.
+
+    Verification: In the verification phase, the verifier checks the validity of the proof using the public parameters and the statement. If the proof is valid, the verifier accepts the statement as true, without learning any information about the witness.
+    
+Groth16 has several advantages over other zero-knowledge proof systems. It is efficient and has a small proof size, which makes it suitable for use in resource-constrained environments such as mobile devices and blockchain networks. It is also secure against a wide range of attacks, including adaptive attacks and quantum attacks.
+
+
+zk-SNARKs (Groth16) have
+- a (fairly) efficient prover time
+- constant proof size (192 bytes)
+- constant (and fast) verification time
+
+
+However, Groth16 has some limitations. It requires a trusted setup, which means that the security of the system depends on the trustworthiness of the setup authority. It also requires the use of pairing-based cryptography, which can be challenging to implement correctly and securely.
+
+## ZKPs without a trusted setup
+
+![zkps](./zkps.jpg)
+
+
 
 
 
