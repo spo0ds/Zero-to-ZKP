@@ -4,12 +4,12 @@ As I learn more about ZKP and its use cases in blockchain, I'll be updating this
 
 ## TOC
 
-| **ZKP**                                                                                             |
-| --------------------------------------------------------------------------------------------------- |
-| <p align="center"> [Day 1](https://github.com/spo0ds/Zero-to-ZKP/blob/main/Into%20to%20ZKP.md) </p> |
-| **Intro to ZKP**                                                                                    |
-| - Use cases                                                                                         |
-| - Properties of ZKP                                                                                 |
-| - zk-Snarks                                                                                         |
-| - What is Groth16?                                                                                  |
-| - ZKPs without a trusted setup                                                                      |
+| **ZKP**                                                                                                   |
+| --------------------------------------------------------------------------------------------------------- |
+| <p align="center"> [Day 1](https://github.com/spo0ds/Zero-to-ZKP/blob/main/Day01/Into%20to%20ZKP.md) </p> |
+| **Intro to ZKP**                                                                                          |
+| - Use cases                                                                                               |
+| - Properties of ZKP                                                                                       |
+| - zk-Snarks                                                                                               |
+| - What is Groth16?                                                                                        |
+| - ZKPs without a trusted setup                                                                            |
