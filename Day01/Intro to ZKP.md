@@ -13,13 +13,12 @@ This is like a zero knowledge proof because you're proving that you know somethi
 Zero knowledge proofs (ZKPs) can be used for privacy and scalability.
 
 - Privacy
-    -  Cryptocurrencies: ZKPs can be used to enhance privacy in cryptocurrencies like Bitcoin and Ethereum. Traditional cryptocurrencies record all transactions on a public blockchain, which means that anyone can see the transaction details. However, with ZKPs, users can prove that they own a certain amount of cryptocurrency without revealing the actual amount or transaction history. This is done by using ZKPs to prove that a transaction is valid without revealing the inputs and outputs of the transaction.
-    -   Digital Identity: ZKPs can be used to prove identity without revealing personal information. For example, a ZKP can be used to prove that a person is over 18 years old without revealing their actual age. This is done by using a ZKP to prove that the person's age is greater than 18 without revealing the actual age.
-    -   Cloud Computing: ZKPs can be used to improve the privacy of data stored on cloud servers. With ZKPs, users can verify the integrity of data without actually accessing the data. This means that the cloud server can remain encrypted, which improves the privacy of the data. For example, a user can verify that a cloud server is storing their encrypted data without actually revealing the data or the encryption key.
-    -   Healthcare: ZKPs can be used to improve the privacy of medical data while still allowing healthcare providers to access the information they need. With ZKPs, patients can prove that they have a certain medical condition without revealing the actual condition or medical history. This can be useful for sharing medical data with multiple healthcare providers without compromising the patient's privacy.
+  - Cryptocurrencies: ZKPs can be used to enhance privacy in cryptocurrencies like Bitcoin and Ethereum. Traditional cryptocurrencies record all transactions on a public blockchain, which means that anyone can see the transaction details. However, with ZKPs, users can prove that they own a certain amount of cryptocurrency without revealing the actual amount or transaction history. This is done by using ZKPs to prove that a transaction is valid without revealing the inputs and outputs of the transaction.
+  - Digital Identity: ZKPs can be used to prove identity without revealing personal information. For example, a ZKP can be used to prove that a person is over 18 years old without revealing their actual age. This is done by using a ZKP to prove that the person's age is greater than 18 without revealing the actual age.
+  - Cloud Computing: ZKPs can be used to improve the privacy of data stored on cloud servers. With ZKPs, users can verify the integrity of data without actually accessing the data. This means that the cloud server can remain encrypted, which improves the privacy of the data. For example, a user can verify that a cloud server is storing their encrypted data without actually revealing the data or the encryption key.
+  - Healthcare: ZKPs can be used to improve the privacy of medical data while still allowing healthcare providers to access the information they need. With ZKPs, patients can prove that they have a certain medical condition without revealing the actual condition or medical history. This can be useful for sharing medical data with multiple healthcare providers without compromising the patient's privacy.
 - Scalability
-    - ZKPs can be used to improve the scalability of blockchain networks. Blockchain networks require all nodes to verify each transaction, which can be computationally expensive and slow down the network. However, with ZKPs, some computations can be performed off-chain, which reduces the computational load on the network. ZKPs can also be used to compress data in a blockchain network, which reduces the size of the blockchain and makes it faster to process transactions.
-
+  - ZKPs can be used to improve the scalability of blockchain networks. Blockchain networks require all nodes to verify each transaction, which can be computationally expensive and slow down the network. However, with ZKPs, some computations can be performed off-chain, which reduces the computational load on the network. ZKPs can also be used to compress data in a blockchain network, which reduces the size of the blockchain and makes it faster to process transactions.
 
 ## Properties of ZKP
 
@@ -42,7 +41,7 @@ This can be very useful in situations where you need to share sensitive informat
 - We have a programmatic way to transform a statement into a language of ploynomials.
 - Like with any prove system, there's a prover and a challenge.
 - To make the challenge non-interactive there's a "hard coded" common reference string (CRS) or SRS (Structured Reference String) which is a part of trusted setup.
-- The SRS is encrypted  in order for it to be reused, which requires multiplication of encrypted values with elliptic curves, which leads to the requirement of something called elliptic curve pairings
+- The SRS is encrypted in order for it to be reused, which requires multiplication of encrypted values with elliptic curves, which leads to the requirement of something called elliptic curve pairings
 
 ## What is Groth16?
 
@@ -55,15 +54,14 @@ Groth16 consists of three main components: the setup, the proof, and the verific
     Proof: In the proof phase, the prover constructs a proof that demonstrates the knowledge of a witness for a given statement. The statement is usually represented as a Boolean circuit or an arithmetic circuit. The witness is a set of private inputs that satisfy the statement. The prover uses the public parameters to construct a commitment to the witness, and then performs a sequence of operations to generate a proof that can be verified by the verifier.
 
     Verification: In the verification phase, the verifier checks the validity of the proof using the public parameters and the statement. If the proof is valid, the verifier accepts the statement as true, without learning any information about the witness.
-    
-Groth16 has several advantages over other zero-knowledge proof systems. It is efficient and has a small proof size, which makes it suitable for use in resource-constrained environments such as mobile devices and blockchain networks. It is also secure against a wide range of attacks, including adaptive attacks and quantum attacks.
 
+Groth16 has several advantages over other zero-knowledge proof systems. It is efficient and has a small proof size, which makes it suitable for use in resource-constrained environments such as mobile devices and blockchain networks.
 
 zk-SNARKs (Groth16) have
+
 - a (fairly) efficient prover time
 - constant proof size (192 bytes)
 - constant (and fast) verification time
-
 
 However, Groth16 has some limitations. It requires a trusted setup, which means that the security of the system depends on the trustworthiness of the setup authority. It also requires the use of pairing-based cryptography, which can be challenging to implement correctly and securely.
 
@@ -71,10 +69,18 @@ However, Groth16 has some limitations. It requires a trusted setup, which means 
 
 ![zkps](./zkps.jpg)
 
+## As an Ethereum Developer, What can I use today?
 
+**Zokrates**
+Zokrates is a project specifically designed for creating Domain-Specific Languages (DSL) for zk-SNARKs. It provides comprehensive documentation and handles many aspects of circuit construction. Zokrates allows you to write in a pseudo-language, automatically generates verifier smart contracts, and simplifies the process of deploying proofs on Ethereum. It's an excellent tool to start with due to its user-friendly features and extensive support.
 
+**Circom & SnarkJS**
+Projects like Darkforest and Tornado Cash utilize Circom and SnarkJS. These tools enable the creation of zk-SNARKs circuits and their implementation in JavaScript. Circom, along with its companion library SnarkJS, provides a JavaScript-based solution for designing circuits and generating proofs. The projects you mentioned offer helpful tutorials that can assist you in getting started with these tools.
 
+**Zinc**
+Zinc is a custom language similar to Rust, primarily developed by Matter Labs for their zk-SNARKs-based layer 2 scaling solution called zk-Sync. Zinc simplifies the process of creating circuits and generating proofs by providing a familiar syntax and powerful abstractions. If you are interested in zk-SNARKs in the context of layer 2 scaling solutions, exploring Zinc can be beneficial.
 
+**Noir**
+Noir is a Domain-Specific Language (DSL) for plonk, which is a type of zk-SNARK protocol. Plonk is known for its efficiency and scalability, making it suitable for complex computations. Noir provides a high-level language for constructing plonk circuits, allowing developers to leverage the benefits of this zk-SNARK protocol.
 
-
-
+By familiarizing yourself with these tools and languages, you can begin building a ZKP system on Ethereum. Each option has its own strengths and areas of application, so consider your specific requirements and explore the associated documentation and tutorials to gain a deeper understanding of their usage.
