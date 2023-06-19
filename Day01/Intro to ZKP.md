@@ -84,3 +84,116 @@ Zinc is a custom language similar to Rust, primarily developed by Matter Labs fo
 Noir is a Domain-Specific Language (DSL) for plonk, which is a type of zk-SNARK protocol. Plonk is known for its efficiency and scalability, making it suitable for complex computations. Noir provides a high-level language for constructing plonk circuits, allowing developers to leverage the benefits of this zk-SNARK protocol.
 
 By familiarizing yourself with these tools and languages, you can begin building a ZKP system on Ethereum. Each option has its own strengths and areas of application, so consider your specific requirements and explore the associated documentation and tutorials to gain a deeper understanding of their usage.
+
+**Code**
+
+We are developing an NFT smart contract that utilizes Zero-Knowledge Proofs (ZKPs). After users prove a puzzle or equation, they will be able to mint an NFT.
+
+To install Zokrates on Linux or macOS, you can use the following command:
+
+> curl -LSfs get.zokrat.es | sh
+
+First, we will initialize a Hardhat project. Then, we'll create a Zokrates file called square.zok, where we'll define a program for verifying the square equation:
+
+```zokrates
+def main(private field a, field b) {
+    assert(a * a == b);
+    return;
+}
+```
+
+To compile the square.zok file, you can use the command:
+
+> zokrates compile -i square.zok
+
+Perform the setup phase with:
+
+> zokrates setup
+
+Compute the witness using the command:
+
+> zokrates compute-witness -a 5 25
+
+Generate the proof:
+
+> zokrates generate-proof
+
+Export a Solidity file:
+
+> zokrates export-verifier
+
+To verify natively:
+
+> zokrates verify
+
+Next, we will modify the mint function in the NFT smart contract from the OxAuth project. We will copy the verifier smart contract into our contract folder and import it:
+
+```solidity
+import "./Verifier.sol";
+```
+
+Create an immutable variable of type Verifier and assign its value in the constructor:
+
+```solidity
+Verifier immutable verifier_sm;
+
+constructor(address _verifierAddress) ERC721("OxAuth", "Ox") {
+    verifier_sm = Verifier(_verifierAddress);
+}
+```
+
+To verify the transaction, we need to call the verifyTx function of the Verifier smart contract. Here is the function signature:
+
+```solidity
+function verifyTx(
+    Proof memory proof,
+    uint[1] memory input
+) public view returns (bool r){}
+```
+
+In our mintNft function, we need to pass the proof and input and add a require statement:
+
+```solidity
+function mintNft(
+    Verifier.Proof memory proof,
+    uint[1] memory input
+) external override onlyOnceMint returns (uint256) {
+    require(verifier_sm.verifyTx(proof, input), "Invalid proof");
+    uint256 tokenId = s_tokenCounter.current();
+    s_tokenCounter.increment();
+    _safeMint(msg.sender, tokenId);
+    _minter[msg.sender] = true;
+    return tokenId;
+}
+```
+
+Users can only mint an NFT if they provide the correct proof and input.
+
+The proof for the message is:
+
+```solidity
+proof.a = Pairing.G1Point(
+    0x299460cbbdab86d3ff62499c156c08ef87d7d2710a689cf470adcb2853b95b40,
+    0x1e6dbc3505637285ff9554aac796a91675ff54028d21646d68987c1230557920
+);
+proof.b = Pairing.G2Point(
+    [
+        0x22747d2c3df6356a47c7090cc8c07e34f12a9b788ff5c0542fc95fba210fc69a,
+        0x25b163e079df7567999b2907c7359e7bad444e6aa9690cc8f23a516225075f22
+    ],
+    [
+        0x0feb24d851bab31f1418570e9c7d8de3fdc4776196df00b784f69f2a601c778c,
+        0x1f604993c00ee7dc717bc4f1833759186959ab8a08e9af543931b2f74d564e40
+    ]
+);
+proof.c = Pairing.G1Point(
+    0x1f33fb3be02c25cd227abd8068d3678fe14229c70cb73d04c0a8784a7aadf021,
+    0x197ee4de538949191f88efea3ec76ca3d1b62675fb237cb5b9eef0128b51087a
+);
+```
+
+The input is:
+
+```solidity
+uint[1] input = [0x19];
+```
