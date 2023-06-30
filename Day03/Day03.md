@@ -51,3 +51,31 @@ While the operation of Tornado Cash involves additional complexities to accommod
 ![proveHash](proveHash.png)
 
 Suppose an anonymity set of three exists, meaning only three possible withdrawals. Publicly, three hashes are shared since the smart contract requires their verification. These hashes are not randomly chosen but rather valid ones. Privately, the user provides their own hash, and the circuit's outcome yields a nullifier. The note is hashed, and its hash is checked against the three hashes provided during the withdrawal process (line 13). Additionally, the note is hashed again to generate a nullifier.
+
+A relayer in blockchain is a third-party service that helps users interact with the blockchain network. Relayers can perform a variety of tasks, such as sending transactions, deploying smart contracts, and interacting with decentralized applications (dapps).
+
+In the context of zero-knowledge proofs (ZKPs), relayers can be used to simplify the process of proving ownership of a certain asset or data without revealing any sensitive information. For example, a user may want to prove to a dapp that they have a certain amount of cryptocurrency in their wallet, but they do not want to reveal their wallet address. A relayer can help with this by generating a ZKP on behalf of the user, which the dapp can then verify without knowing the user's wallet address.
+
+**Dark Forest**
+
+Dark Forest is a game that is played on a hashed matrix space. On the blockchain, only the hashes of coordinates and the hashes of moves are stored. Players want to be able to prove to the game engine (in this case, a smart contract) that their move is valid without revealing it. They do this by proving the distance between two obfuscated coordinates and proving that the distance is less than a certain value.
+
+What makes Dark Forest intriguing is that it combines privacy with a computational back door. Initially, users cannot discern the exact coordinates on the map, as they are hidden. However, users can employ brute force techniques to hash all possible coordinates, ultimately revealing the matrix space and the locations of other players. This unique aspect is facilitated by using zk-SNARKs, allowing for an affordance that would not be possible otherwise.
+
+**ZKML**
+
+For those familiar with the Kaggle machine learning (ML) platform used for running ML competitions, there's an intriguing possibility to establish a decentralized version of Kaggle. The concept revolves around proving the accuracy of an ML model on a public dataset without revealing its details. By maintaining the privacy of the model while showcasing its effectiveness, a decentralized market of ML models can be created on the blockchain.
+
+Here's how it works: Someone initiates a bounty by providing a reference to a public dataset and its corresponding hash. This dataset serves as the training dataset, and anyone can train an ML model using it. Once a participant believes their model has achieved a satisfactory level of accuracy, they can publicly commit to the hash of the model (H) and provide a proof, demonstrating that the model achieves X percent accuracy on a testnet.
+
+The entire ML model can be executed within a SNARK, where the model's parameters act as private inputs, and the dataset serves as either private or public inputs (although the distinction doesn't significantly impact the process). Essentially, the goal is to prove that the model with hash (H) attains X percent accuracy on a dataset with hash (D), as an example. By employing this approach, we can demonstrate to a smart contract that the model performs admirably with the given dataset.
+
+**What if overfitting occurs?**
+
+One concern that arises is the possibility of overfitting, where a model merely memorizes the training dataset. To address this, the bounty creator subsequently releases a validation set, ensuring that participants haven't fallen into the overfitting trap. In order to claim the reward, participants must evaluate the same model on the validation set, as there exists a commitment tied to the hash of their model.
+
+To enable the bounty submitter to receive the model and claim the reward, the model is encrypted. A SNARK proof is then constructed, demonstrating that the submitter possesses a private key capable of decrypting the model using the hash (H). Running the model within the SNARK itself may not be practical, but there have been experiments where simple models, such as convolutional models, have been executed in a SNARK. It's worth noting that the time it takes to run the model within the SNARK is not a significant concern, as it only needs to be done once. It is conceivable for someone to rent a computational cluster for a few days to prove the model's effectiveness on multiple samples, but this remains an active area of research.
+
+By following this entire process, a participant can train a model on a testset, prove its adequacy on the testset, have the bounty submitter reveal a validation set, demonstrate exceptional performance on the validation set, and finally allow the bounty submitter to decrypt the model. In exchange for completing these steps, the participant can claim the bounty. The beauty of this approach lies in its execution on a smart contract, which safeguards the interests of the model trainer. The bounty submitter is unable to act dishonestly, as their commitment to the process is enforced by the smart contract.
+
+An additional benefit of this methodology is its potential extension to various problem domains where the goal is to create a high-performing solution. It opens doors for on-chain implementation of application-specific integrated circuits (ASICs) by incorporating a simulator into the SNARK and constructing an operational amplifier using those parameters. Now, anyone can strive to find a high-quality model, prove its effectiveness, and reveal it to the bounty submitter. This empowers people to conduct research and offer bounties on the blockchain, requiring the implementation of a verification function within the SNARK.
