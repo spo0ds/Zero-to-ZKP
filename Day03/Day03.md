@@ -97,3 +97,29 @@ With ZKPs, it is possible to prove that a message has been signed by specific ad
 ![groupMessaging](groupMessaging.png)
 
 In the process of posting a message in the group chat, you have a private input, which represents your secret. While it is not a traditional private-public key pair that allows for encryption and decryption, it serves the purpose for our objective. You provide a list of hashes, which essentially function as the "public keys" of all participants in the group chat, along with the message. Using this information, you obtain an attestation. Initially, you hash your secret, and then within the for loop on line 19, you prove that the hash of your secret is part of the list of hashes. This proves your membership within the group without disclosing your specific identity. Additionally, you hash your message and secret, creating an attestation that can be used later to prove that you posted a particular message, ensuring accountability within the group chat.
+
+**Private Airdrops**
+
+An airdrop is a method of distributing tokens to users of a specific protocol. For example, when Uber went public, they could have conducted an airdrop where every Uber user received some company stock. This would have given ownership of the company to the actual users rather than just the investors. Typically, airdrops involve a distributor who initiates the process.
+
+To conduct an airdrop, one approach is to store the recipients' addresses and the corresponding token amounts in a smart contract. However, this method can be expensive as it requires uploading a significant amount of data to the blockchain. As an alternative, a merkle tree can be used. A merkle tree is created off-chain, consisting of tuples of addresses and token amounts. The root of this merkle tree is then stored in a smart contract. To claim their airdrop, recipients provide a merkle proof that verifies their address and token amount, which is traced back to the merkle root.
+
+Now, let's consider a scenario where users can claim their airdrops secretly, without revealing their actions to others. Additionally, users may want to claim their airdrops from a different address than the one specified in the merkle leaf. How can we design such a system?
+
+This can be achieved using an ECDSA circuit.
+
+**Stealthdrop.xyz**
+
+In this system, a smart contract holds a merkle root. However, instead of storing addresses, it stores public keys. An address is essentially the hash of a public key, with some bytes truncated. Converting an address back to a public key is not straightforward, so we use ECDSA circuits when claiming the airdrop.
+
+When claiming the airdrop, users prove that they have signed a message with the private key corresponding to a public key stored in the merkle tree. Importantly, this proof does not reveal the actual private key. The ECDSA r and s values from the signature are then hashed as a nullifier. This nullifier prevents users from claiming the airdrop multiple times without disclosing their identities. Additionally, to maintain privacy, the claim can be sent from a different address, such as a newly created wallet, instead of the address specified in the merkle tree. This way, the user's identity remains undisclosed.
+
+By implementing this approach, it becomes impossible for anyone on the blockchain to trace the claims back to the original airdrop recipients or determine whether they have claimed their tokens or not.
+
+**Proof of Membership**
+
+Proof of membership is similar to a private airdrop but focuses on demonstrating that you belong to a specific group. In this scenario, there is a merkle tree with addresses, and certain addresses hold special privileges as owners of the token list for the group. Using an ECDSA circuit, you can prove that you possess the private key corresponding to a public key in the merkle tree, all without revealing which specific key it is. There are two ways to accomplish this: by sending a message or by directly providing the private key to the circuit. Each method has its pros and cons.
+
+When sending a message, you don't need to share the private key with the approver, which can be useful if you don't fully trust the approver. However, this approach has more constraints and is more costly in terms of proving the membership. Similar to the private airdrop, a nullifier is used to prevent the reuse of the same address. By employing this technique, you can provide evidence from any computer that you are part of the list, without disclosing your specific position within it.
+
+As an example, consider a Discord channel where joining requires having a certain number of tokens or being part of a specific list on the blockchain. With this proof of membership system, you can join the channel without revealing your address or linking it to your Discord user, thus maintaining your privacy and avoiding the risk of doxing yourself.
