@@ -79,3 +79,21 @@ To enable the bounty submitter to receive the model and claim the reward, the mo
 By following this entire process, a participant can train a model on a testset, prove its adequacy on the testset, have the bounty submitter reveal a validation set, demonstrate exceptional performance on the validation set, and finally allow the bounty submitter to decrypt the model. In exchange for completing these steps, the participant can claim the bounty. The beauty of this approach lies in its execution on a smart contract, which safeguards the interests of the model trainer. The bounty submitter is unable to act dishonestly, as their commitment to the process is enforced by the smart contract.
 
 An additional benefit of this methodology is its potential extension to various problem domains where the goal is to create a high-performing solution. It opens doors for on-chain implementation of application-specific integrated circuits (ASICs) by incorporating a simulator into the SNARK and constructing an operational amplifier using those parameters. Now, anyone can strive to find a high-quality model, prove its effectiveness, and reveal it to the bounty submitter. This empowers people to conduct research and offer bounties on the blockchain, requiring the implementation of a verification function within the SNARK.
+
+**ZK for identity**
+
+Ethereum offers a permissionless identity system where anyone can generate a private key and a corresponding public key, enabling the creation of new identities. This feature is remarkable as it allows individuals to establish an identity by generating some random data. However, a challenge arises in linking these identities together, and the existing privacy model follows an all-or-nothing approach. If someone obtains your public key, they can trace your entire on-chain behavior.
+
+Ideally, it would be beneficial to incorporate information asymmetry into this identity model. Essentially, we need a way to weakly link addresses together, similar to how attendees appear at an elite masquerade ball. At such an event, everyone wears masks, and although you know the attendees are legitimate, you are unaware of their true identities. This concept holds significance for identities on the internet and within societies, and achieving this requires the application of Zero-Knowledge Proofs (ZKPs).
+
+**Primitive**
+
+Ethereum utilizes the Elliptic Curve Digital Signature Algorithm (ECDSA) for its asymmetric keys. However, ECDSA is not compatible with SNARKs. Nevertheless, Circom, a programming language and toolset, introduces groth-16 circuits, which enables the construction of private applications based on Ethereum identities.
+
+**ZK Group Messaging**
+
+With ZKPs, it is possible to prove that a message has been signed by specific addresses without revealing which address specifically signed the message. This allows for the creation of a group chat where users are authenticated. Participants in the group chat can be certain that the message originates from someone within the group, but the exact sender remains unknown. Moreover, two additional functionalities can be achieved using this approach: claiming that a message is not yours or claiming that it is yours. These dynamics result in intriguing social interactions.
+
+![groupMessaging](groupMessaging.png)
+
+In the process of posting a message in the group chat, you have a private input, which represents your secret. While it is not a traditional private-public key pair that allows for encryption and decryption, it serves the purpose for our objective. You provide a list of hashes, which essentially function as the "public keys" of all participants in the group chat, along with the message. Using this information, you obtain an attestation. Initially, you hash your secret, and then within the for loop on line 19, you prove that the hash of your secret is part of the list of hashes. This proves your membership within the group without disclosing your specific identity. Additionally, you hash your message and secret, creating an attestation that can be used later to prove that you posted a particular message, ensuring accountability within the group chat.
