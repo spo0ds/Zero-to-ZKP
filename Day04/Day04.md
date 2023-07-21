@@ -100,3 +100,60 @@ b0 = 1
 b1 = 0
 b2 = 1
 b3 = 0
+
+Let's explore an example where a circuit could potentially fail. We will modify the constraint from b0 \* (b0 - 1) === 0; to the following:
+
+```circom
+(b0 - 2) * (b0 - 3) === 0;
+```
+
+Even though we are still generating a 0101 witness, this altered constraint will lead to failure. The witness we generated will not satisfy the new constraint. Consequently, when using ZKrepl, an "assert failed" error will be encountered.
+
+Now, let's consider the scenario where the witness generation is incorrect. Suppose there was an error in the witness generation phase, and the statement b2 <-- x \ 4 % 2; was mistakenly changed to:
+
+```circom
+b2 <-- x \ 2 % 2;
+```
+
+As a result, an "assert failed" error will also be triggered. This situation represents a reverse error, where the constraints remain correct, but the witness generation is flawed. Consequently, an improper witness is generated, but the properly set up constraints will ensure that only valid proofs are verified. In this case, we encounter an invalid proof, and circom will indicate that it is unable to generate a valid proof.
+
+Ensuring that the system is properly constrained is of utmost importance, particularly when dealing with circuits designed to secure financial systems. Improper constrainting could potentially lead to the ability to create money out of thin air, which is highly undesirable. Currently, the best practice involves manually examining the circuits and constraints, but this approach may lack confidence and is not entirely reliable. One valuable mental model to keep in mind is to minimize the use of single arrows, whenever possible, in favor of double arrows. Utilizing double arrows helps ensure that each variable being written is uniquely determined by some previously known variables.
+
+To generate constraints for different bits, we can employ the following circom code:
+
+```circom
+pragma circom 2.1.4;
+
+include "circomlib/poseidon.circom";
+
+template Num2Bits(nBits) {
+    signal input x;
+
+    // If nBits are known during compile time,
+    // This will be expanded to b0, b1, b2, and so on...
+    signal output b[nBits];
+
+    for (var i = 0; i < nBits; i++)
+    {
+        b[i] <-- x \ (2 ** i) % 2 ;
+    }
+
+    for (var i = 0; i < nBits; i++)
+    {
+        b[i] * (b[i] - 1) === 0;
+    }
+
+    var accum;
+    for (var i =0; i < nBits; i++)
+    {
+        accum += 2 ** i * b[i];
+    }
+    accum === x;
+}
+
+component main { public [ x ] } = Num2Bits(5);
+
+/* INPUT = {
+    "x": "5"
+} */
+```
