@@ -243,3 +243,60 @@ signal interm;
 interm <== (pk - pk1) * (pk - pk2);
 interm * (pk - pk3) === 0;
 ```
+
+Let's carefully consider some of the important aspects of the PubKeyGen module and the considerations surrounding it.
+
+Firstly, PubKeyGen requires a computation that can be evaluated within a SNARK (Succinct Non-Interactive Argument of Knowledge). In scenarios where we are dealing with cryptographic algorithms like RSA public key generation, the keys might not fit in the standard 254 bits, necessitating the use of big int abstractions. As a result, the secret key and output key will likely be arrays of signals, each representing nbits. If we intend to use the group signature module for a known signature scheme or public-private key scheme, this additional complexity of implementing cryptographic algorithms inside the circuit arises. This is where circom's ECDSA (Elliptic Curve Digital Signature Algorithm) comes into play.
+
+Another option is to utilize a SNARK-friendly public key generation algorithm, such as hash functions, which are more suitable for use within SNARKs.
+
+It is essential to note that in the group signature circuit, we do not actually need the ability to perform signature verification; instead, the main focus is on verifying the SNARK itself.
+
+Therefore, a one-way function, such as a hash function, can suffice. SNARK-friendly hash functions, like MIMC (Merkle-Damgård Iterated Multiplication Composition) and POSEIDON, are commonly used due to their efficiency. MIMC involves a sequence of cubing the input and adding constants, all performed modulo the SNARK prime. This makes MIMC very efficient, as it does not require bit conversions or extensive bit operations.
+
+Thus, it is proposed to replace the PubKeyGen with MIMC:
+
+```circom
+// Importing MIMC
+include "circomlib/mimcsponge.circom";
+
+component pkGen = MiMCSponge(1, 220, 1);
+
+```
+
+MIMC has an array of inputs (ins), which allows hashing an arbitrary number of inputs and deriving an ordinary number of outputs. In this case, we use one output to keep it simple.
+
+```circom
+signal pk;
+pk <== pkGen.outs[0];
+
+signal interm;
+interm <== (pk - pk1) * (pk - pk2);
+interm * (pk - pk3) === 0;
+```
+
+This circuit enables the proof of knowledge of a satisfying assignment to the Rank-1 Constraint System (R1CS) and proves that we know the pre-image of one of the three hashes. Essentially, the public key becomes a hash commitment to the secret key.
+
+To ensure that the generated Zero-Knowledge (ZK) proof is specific to a message, we introduce a message hash as an input. To achieve this, we create a dummy signal that relies on the message hash.
+
+```circom
+signal input msgHash;
+signal dummy;
+dummy <== msgHash * msgHash;
+```
+
+By requiring the message hash in the proof of knowledge, we make sure that the signature is tied to a specific message. Additionally, the dummy computation is introduced to prevent the circom compiler from optimizing out the input, which could compromise the proof's specificity to the message hash. Multiplication is chosen for the dummy computation to meet the requirements of ZK proofs. This approach guarantees that the generated signature is unique to the provided message hash.
+
+The inclusion of the dummy constraints in the circuit serves an essential purpose - it ensures that the generated proof remains specific to the given message hash. This measure is implemented to prevent any misuse or misrepresentation of the signature. By adding these constraints, I aim to ensure that the signature produced is uniquely tied to the intended message. This way, it would not be possible for anyone to take the signature and use it for a different message, claiming that it was signed for that specific message.
+
+Now, let's provide the values of the inputs for the circuit.
+
+```circom
+/* INPUT = {
+    "sk": 42,
+    "pk1": 100,
+    "pk2": "10644022205700269842939357604110603031463166818082702766765548366499887869490",
+    "pk3": 101,
+    "msgHash": "10",
+} */
+```
