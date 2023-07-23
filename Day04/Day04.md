@@ -157,3 +157,89 @@ component main { public [ x ] } = Num2Bits(5);
     "x": "5"
 } */
 ```
+
+**Group Signatures**
+
+The objective of this circuit is to demonstrate the knowledge of the private key corresponding to one of three public keys, which are represented as hash commitments. Additionally, we aim to create a proof that is specific to a particular message. In other words, the proof should not be reusable for any other private key and public key combination; it must be uniquely tied to the specific message being verified.
+
+To achieve this, we will utilize a circuit called GroupSig. The inputs to this circuit will be the secret key (sk) and the three public keys (pk1, pk2, pk3). The desired outcome is a proof that the private key sk is associated with one of the three provided public keys.
+
+Here is the circuit template:
+
+```circom
+pragma circom 2.1.4;
+
+include "circomlib/poseidon.circom";
+
+template GroupSig() {
+
+    // Secret key
+    signal input sk;
+
+    // Public keys
+    signal input pk1;
+    signal input pk2;
+    signal input pk3;
+}
+
+component main { public [pk1, pk2, pk3] } = GroupSig();
+
+/* INPUT = {
+    "sk":,
+    "pk1":,
+    "pk2":,
+    "pk3":,
+} */
+```
+
+You might wonder why the public keys are considered inputs rather than outputs to the circuit. The reason is that we want to fix the set of public keys that we are generating a proof for. By providing the public keys as inputs, we are defining a specific context for the proof generation.
+
+As for the outputs of this circuit, we do not require any outputs because this circuit is solely responsible for proving a fact about a set of inputs, some of which are public (pk1, pk2, and pk3) and others are private (sk). The proof generated is the significant result, and no further outputs are needed.
+
+Now, suppose we have another template called pub keygen, which derives a public key from a given private key.
+
+```circom
+component pkGen = PubKeyGen(); // One input signal in and one input signal out
+```
+
+Here is the definition of the PubKeyGen template:
+
+```circom
+template PubKeyGen() {
+    // Secret key input
+    signal input sk_in;
+
+    // Public key output
+    signal output pk_out;
+
+    // Computes pk_out from sk_in
+}
+```
+
+To prove that the public key corresponding to a given sk is equal to one of the three public keys (pk1, pk2, or pk3), we need to perform the following steps:
+
+    - Feed the secret key (sk) obtained as an input into the PubKeyGen circuit and obtain the resulting public key (pk).
+    - Verify whether the generated public key (pk) matches any of the three public keys (pk1, pk2, or pk3).
+
+The syntax for using an external template is similar to object-oriented programming (OOP), where we access the sk_in variable of the pkGen circuit as pkGen.sk_in.
+
+```circom
+pkGen.sk_in <== sk; // Assign the value of sk to sk_in
+
+signal pk;
+pk <== pkGen.pk_out; // Assign the value of pk_out to pk
+```
+
+To check whether the public key (pk) is equal to one of the three public keys (pk1, pk2, or pk3), we utilize a quadratic expression:
+
+```circom
+(pk - pk1) * (pk - pk2) * (pk - pk3) === 0;
+```
+
+However, it is crucial to note that this circuit will not function as expected because the above expression is not quadratic. To address this issue, we need to define an intermediate value (interm) to correctly evaluate the expression:
+
+```circom
+signal interm;
+interm <== (pk - pk1) * (pk - pk2);
+interm * (pk - pk3) === 0;
+```
