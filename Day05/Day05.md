@@ -35,3 +35,48 @@ The contract will then verify the ZKP, check if the declared root matches the To
 ![withdrawl](withdrawl.png)
 
 The contract remains unaware of which specific deposit note has been withdrawn, but it does recognize that a password corresponding to a deposit note in the tree has been withdrawn and that this specific password has not been withdrawn before.
+
+**merkleTree.circom**
+
+The MerkleTree checker is used to verify the correctness of a Merkle Proof for a given Merkle root and a leaf value. When we want to prove that a certain number was part of the accumulation process in a cryptographic accumulator (such as a Merkle tree), we typically have to present all the values that were used to generate the root. However, this can become impractical if the dataset is large, resulting in a proof size equal to the full dataset size. Merkle proofs offer a more efficient solution by allowing proofs of inclusion that are logarithmic in size compared to the dataset.
+
+The process of proof verification in a circom circuit involves presenting the leaf value and its sibling, followed by subsequent path elements like uncle, great uncle, and so on, along with their corresponding indices in the path. These indices indicate whether the elements are on the left or right side during the hashing process.
+
+In the circom circuit (merkleTree.circom), we define the input signals for the leaf, root, path elements, and path indices:
+
+```circom
+signal input leaf;
+signal input root;
+signal input pathElements[levels];
+signal input pathIndices[levels];
+```
+
+Next, we use selectors and hashLeftRight components to handle the case when the leaf is on either the left or right side of its sibling:
+
+```circom
+    selectors[i].in[0] <== i == 0 ? leaf : hashers[i - 1].hash;
+            selectors[i].in[1] <== pathElements[i];
+
+hashers[i].left <== selectors[i].out[0];
+hashers[i].right <== selectors[i].out[1];
+```
+
+To determine whether the sibling, uncle, great uncle, etc., are on the left or right side, we use the pathIndices:
+
+```circom
+selectors[i].s <== pathIndices[i];
+```
+
+We continue this process, plugging in the left sibling into the hashers component, obtaining the parent, and then plugging both the parent and uncle into a hash component, and so on, until we reach the top of the tree.
+
+```circom
+selectors[i].in[0] <== i == 0 ? leaf : hashers[i - 1].hash;
+        selectors[i].in[1] <== pathElements[i];
+        selectors[i].s <== pathIndices[i];
+
+        hashers[i] = HashLeftRight();
+        hashers[i].left <== selectors[i].out[0];
+        hashers[i].right <== selectors[i].out[1];
+```
+
+At the top, we check whether the result is equal to the root. If this check passes, it means that we have a sequence of hash pre-images that lead to the root, starting with the original value we wanted to prove inclusion for.
