@@ -129,3 +129,79 @@ tree.root <== root;
 ```
 
 It is important to note that this circuit preserves privacy. It does not reveal the specific secret value being withdrawn. All the Merkle proof arguments, including the Merkle path, the index of the tree, and other related data, are kept as private inputs. Thus, the circuit proves the knowledge of a valid Merkle path without disclosing the actual secret value. Additionally, the nullifier ensures that the withdrawer's identity remains confidential since it is computed using a different hash function (G) than the one used for the Merkle tree (H). This way, revealing the nullifier does not expose any information about the corresponding deposit.
+
+**If I try to withdraw again even though I've already withdrawn, will I be able to generate a valid ZKP for my withdrawal?**
+
+Yes, you will be able to generate a valid ZKP (Zero-Knowledge Proof) for your withdrawal. However, when you present this proof to the contract, the ZKP verification will succeed, but the contract will detect that the nullifier value in the proof has already been seen before. As a result, the contract will reject the withdrawal attempt.
+
+This scenario highlights an interesting pattern that addresses the fact that proofs are not stateful in Ethereum. Proofs can't directly access memory locations within Ethereum; they can only prove pure functions. Therefore, in conjunction with stateful applications like Ethereum Dapps or regular non-blockchain apps, proofs often have public inputs or outputs to connect them to a specific state identifier. The contract or verifier then checks whether the proof pertains to something the contract cares about.
+
+In this case, the contract doesn't care about the proof of a nullifier that has already been seen. Moreover, you could use the withdraw circuit to generate a ZKP for a leaf corresponding to a root that the contract has never seen before. However, the contract won't be interested in a random root that doesn't match its current state, so it will discard such proofs based on their relevance.
+
+Now, let's examine the checks in the smart contract.
+
+## Tornado.sol
+
+**Withdraw Function**
+
+The withdraw function takes in the proof, root, and nullifierHash, which were public values in the circuit, along with other input parameters for the relayer system (which can be discussed later).
+
+The first check the contract performs is to ensure that the nullifier hash has not already been used for a withdrawal:
+
+```solidity
+require(!nullifierHashes[_nullifierHash], "The note has been already spent");
+```
+
+Next, the contract checks that the root declared by the sender is indeed the root of the smart contract:
+
+```solidity
+require(isKnownRoot(_root), "Cannot find your merkle root"); // Make sure to use a recent one
+```
+
+To perform this check, the contract uses the isKnownRoot function, which has additional logic to verify whether the provided root is present in the root history. It confirms that the root is one of the past 30 deposits, as the root may change due to other deposits being added between generating the proof and submitting the withdrawal transaction.
+
+This approach is secure because if a deposit was previously permitted to withdraw (i.e., its note existed in the set), it will continue to exist in the set even if other users add new deposit notes. The only potential issue arises if someone withdraws the note between proof generation and the withdrawal transaction. However, this is already checked based on whether the nullifier hash is present in the set of nullifier hashes that have been seen before, which is why the isKnownRoot check is crucial.
+
+The last check in the withdraw function is to assert that the proof verifies correctly:
+
+```solidity
+require(
+  verifier.verifyProof(
+    _proof,
+    [uint256(_root), uint256(_nullifierHash), uint256(_recipient), uint256(_relayer), _fee, _refund]
+  ),
+  "Invalid withdraw proof"
+);
+```
+
+After successful verification, the contract marks the nullifier hash as seen:
+
+```solidity
+nullifierHashes[_nullifierHash] = true;
+```
+
+**Deposit Function**
+
+The deposit function is used to make a deposit and requires the presentation of the hash commitment password for the deposit.
+
+Before proceeding with the deposit, the contract checks that the commitment has not been submitted previously:
+
+```solidity
+require(!commitments[_commitment], "The commitment has been submitted");
+```
+
+The contract then calls the insert function, which updates the tree and sets that the commitment has been added to the smart contract. The cryptocurrency being deposited is added to the mixer pool.
+
+```solidity
+uint32 insertedIndex = _insert(_commitment);
+commitments[_commitment] = true;
+_processDeposit();
+```
+
+**Relayer System**
+
+The relayer system is employed to address a chicken and egg problem. To use Tornado, one needs to get ETH into a clean address that hasn't interacted with centralized exchanges, as this enhances anonymity. However, this address might not have any ETH to pay for gas when attempting to withdraw from Tornado. The solution is a third-party service called a "relayer," which anyone can provide. The relayer will submit the transaction on behalf of the recipient for a percentage of the transaction's value. This way, fresh addresses without ETH for gas can still make withdrawals.
+
+To prevent frontrunning, the proof is specific to the recipient's address. This ensures that the relayer can submit the transaction but can't alter the proof. Additionally, the refund mechanism ensures that any remaining gas not used in ETH withdrawals is returned to the relayer.
+
+Lastly, if a relayer goes offline, another relayer can still submit the transaction because the proof is relayer-specific and can be modified by the contract.
