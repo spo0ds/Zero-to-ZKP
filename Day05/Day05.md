@@ -80,3 +80,52 @@ selectors[i].in[0] <== i == 0 ? leaf : hashers[i - 1].hash;
 ```
 
 At the top, we check whether the result is equal to the root. If this check passes, it means that we have a sequence of hash pre-images that lead to the root, starting with the original value we wanted to prove inclusion for.
+
+**withdraw.circom**
+
+In the withdraw.circom circuit, we aim to prove two things. Firstly, we want to demonstrate that we know a secret value that is contained within a Merkle root accumulator. Secondly, we need to prove that this secret value, when hashed using the nullifier hash function, corresponds to a unique identifier (nullifier).
+
+The inputs to the circuit are as follows:
+
+    root: This is the public input, visible to the smart contract, and it represents the ZKP (Zero-Knowledge Proof) that verifies the inclusion of some value in a specific root.
+    nullifierHash: This is another public input representing the nullifier hash, and for practical purposes, we can consider it as an implementation of the hash function G.
+    recipient, relayer, fee, and refund: These are not involved in the circuit's computations, so we can ignore them for now.
+    nullifier: A private input representing the unique identifier (nullifier) that we want to prove knowledge of.
+    secret: Another private input representing the deposit password we are withdrawing.
+    pathElements and pathIndices: These are auxiliary private inputs that get used in the Merkle tree checker. For now, we don't need to focus on them in the context of the withdrawal; just think of them as values plugged into the Merkle tree checker to ensure the Merkle proof verification.
+
+```circom
+signal input root;
+signal input nullifierHash;
+signal input recipient; // not taking part in any computations
+signal input relayer;  // not taking part in any computations
+signal input fee;      // not taking part in any computations
+signal input refund;   // not taking part in any computations
+signal private input nullifier;
+signal private input secret;
+signal private input pathElements[levels];
+signal private input pathIndices[levels];
+```
+
+The nullifier hash is computed by using the secret value in the hash function H, which yields the nullifier hash. The circuit then verifies if the nullifier hash matches the public input nullifierHash.To achieve the first objective of proving knowledge of the pre-image (secret) of the nullifier hash, we utilize a commitment hasher component:
+
+```circom
+component hasher = CommitmentHasher();
+hasher.nullifier <== nullifier;
+hasher.secret <== secret;
+hasher.nullifierHash === nullifierHash;
+```
+
+Next, the circuit checks the inclusion of the leaf (which is the hash of our secret deposit note) in the Merkle root by utilizing the MerkleTreeChecker component.For the second part of the ZKP, we use the Merkle tree checker component:
+
+```circom
+component tree = MerkleTreeChecker(levels);
+tree.leaf <== hasher.commitment;
+tree.root <== root;
+    for (var i = 0; i < levels; i++) {
+        tree.pathElements[i] <== pathElements[i];
+        tree.pathIndices[i] <== pathIndices[i];
+    }
+```
+
+It is important to note that this circuit preserves privacy. It does not reveal the specific secret value being withdrawn. All the Merkle proof arguments, including the Merkle path, the index of the tree, and other related data, are kept as private inputs. Thus, the circuit proves the knowledge of a valid Merkle path without disclosing the actual secret value. Additionally, the nullifier ensures that the withdrawer's identity remains confidential since it is computed using a different hash function (G) than the one used for the Merkle tree (H). This way, revealing the nullifier does not expose any information about the corresponding deposit.
